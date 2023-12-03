@@ -1,5 +1,6 @@
-import re
+import collections
 import math
+import re
 
 steps = [(1,0), (1,1), (0,1), (-1,1), (-1,0), (-1,-1), (0,-1), (1,-1)]
 
@@ -44,16 +45,18 @@ def part2(inp):
     symbols, numbers = inp
     total = 0
 
-    gears = [pos for pos, sym in symbols.items() if sym == '*']
-    for gear in gears:
-        gear_nums = []
-        for (nx, ny), (num_end, num_val) in numbers.items():
-            check = [any(gear == neigh for neigh in neighbors(x, ny))
-                    for x in range(nx, num_end)]
-            if any(check):
-                gear_nums.append(num_val)
+    gear_nums = collections.defaultdict(list)
+    for (nx, ny), (num_end, num_val) in numbers.items():
+        gears = set(
+            [neigh for x in range(nx, num_end)
+            for neigh in neighbors(x, ny)
+            if neigh in symbols and symbols[neigh] == '*'])
 
-        if len(gear_nums) > 1:
-            total += math.prod(gear_nums)
+        for g in gears:
+            gear_nums[g].append(num_val)
+
+    for gear_num in gear_nums.values():
+        if len(gear_num) > 1:
+            total += math.prod(gear_num)
 
     return total
