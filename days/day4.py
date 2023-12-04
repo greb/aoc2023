@@ -1,34 +1,28 @@
 def parse(inp):
-    cards = dict()
+    cards = []
     for line in inp.splitlines():
-        card_num, nums = line.split(':')
-        card_num = int(card_num.split()[1])
+        _, nums = line.split(':')
         winning, have = nums.split('|')
         winning = set(int(n.strip()) for n in winning.split())
         have = set(int(n.strip()) for n in have.split())
-        cards[card_num] = len(winning & have)
+        cards.append(len(winning & have))
     return cards
 
 
 def part1(cards):
     score = 0
-    for match in cards.values():
-        if match > 0:
-            score += 2 ** (match-1)
+    for n in cards:
+        if n > 0:
+            score += 2 ** (n-1)
     return score
 
 
 def part2(cards):
-    unchecked = list(cards.keys())
-    total = len(cards)
+    card_cnt = [1] * len(cards)
 
-    while unchecked:
-        card_num = unchecked.pop()
-        match = cards[card_num]
-        total += match
-        for n in range(match):
-            next_card_num = card_num + n + 1
-            unchecked.append(next_card_num)
+    for idx, n in enumerate(cards):
+        for i in range(n):
+            card_cnt[idx + i + 1] += card_cnt[idx]
 
-    return total
+    return sum(card_cnt)
 
