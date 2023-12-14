@@ -24,23 +24,21 @@ def parse(inp):
 
 def tilt(w, h, movers, fixers, d):
     dx, dy = d
+    stopped = fixers.copy()
 
-    while True:
-        cnt = 0
+    while movers:
         new_movers = set()
         for x, y in movers:
-            nx, ny = x+dx, y+dy
-            if ((nx, ny) not in fixers and (nx, ny) not in movers
-                and 0 <= nx < w and 0 <= ny < h):
-                new_movers.add((nx, ny))
-                cnt += 1
+            nxt = nx, ny = x+dx, y+dy
+            in_bounds = 0 <= nx < w and 0 <= ny < h
+            if not in_bounds or nxt in stopped:
+                stopped.add((x,y))
+            elif nxt in movers:
+                new_movers.add((x,y))
             else:
-                new_movers.add((x, y))
+                new_movers.add(nxt)
         movers = new_movers
-        if cnt == 0:
-            break
-
-    return movers
+    return stopped - fixers
 
 
 def load(w, h, movers):
