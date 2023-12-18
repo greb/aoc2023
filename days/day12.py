@@ -9,24 +9,6 @@ def parse(inp):
     return rows
 
 
-def gen_arrangements(groups, n):
-    if not groups:
-        yield '.'*n
-        return
-
-    offset = 0
-    head, *tail = groups
-    while offset+head <= n:
-        chunk = '.'*offset + '#'*head
-        if tail:
-            chunk += '.'
-            next_n = n - (offset+head+1)
-        else:
-            next_n = n - (offset+head)
-        for next_chunk in gen_arrangements(tail, next_n):
-            yield chunk + next_chunk
-        offset += 1
-
 def min_group_len(groups):
     if not groups:
         return 0
