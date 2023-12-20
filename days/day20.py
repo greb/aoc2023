@@ -2,6 +2,7 @@ import collections
 import itertools
 import math
 
+start = 'broadcaster'
 
 def parse(inp):
     mods = dict()
@@ -38,9 +39,8 @@ def press_button(mods, cables, mem, cnt):
     cnt[0] += 1
 
     queue = collections.deque()
-    src = 'broadcaster'
-    for out in cables[src]:
-        queue.append((src, out, False))
+    for out in cables[start]:
+        queue.append((start, out, False))
 
     while queue:
         src, dst, pulse = queue.popleft()
@@ -68,3 +68,39 @@ def part1(machine):
     for _ in range(1000):
         press_button(mods, cables, mem, cnt)
     return math.prod(cnt)
+
+
+def count(gate, mods, cables):
+    # Counter works by sending a signal through a flip-flop chain. A flip-flop
+    # that sends a signal to the reset/ouput gate counts as a HI digit in the
+    # cycle count.
+    cnt = 0
+    pos  = 1
+    while True:
+        outs = cables[gate]
+        if len(outs) == 2:
+            a, b = outs
+            gate = a if mods[a] == '%' else b
+            cnt += pos
+        else:
+            a = outs[0]
+            if mods[a] == '%':
+                gate = a
+            else:
+                cnt += pos
+                break
+        pos *= 2
+    return cnt
+
+
+def part2(machine):
+    # This works for my input, but not necessarily for yours.
+
+    # Unfortunately, a general solution would be to difficult to implement.
+    # We must exploit the structure of the input. Broadcaster feeds into
+    # 4 binary counters, which themselves feed into a common comperator.
+    mods, cables = machine
+    cnts = [count(gate, mods, cables) for gate in cables[start]]
+
+    # Comperator is only active when all cycles line up
+    return math.lcm(*cnts)
