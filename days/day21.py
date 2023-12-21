@@ -1,73 +1,57 @@
 import collections
 
-def parse(inp):
-    positions = set()
-    rocks = set()
-
-    lines = inp.splitlines()
-    for y, line in enumerate(lines):
-        for x, ch in enumerate(line):
-            if ch == 'S':
-                positions.add((x,y))
-            if ch == '#':
-                rocks.add((x,y))
-
-    bounds = len(lines[0]), len(lines)
-    return positions, rocks, bounds
-
-
 DIRS = [(1,0), (0,1), (-1,0), (0,-1)]
 def moves(pos):
     for dir in DIRS:
         yield tuple(p+d for p,d in zip(pos, dir))
 
 
-def wrap(pos, bounds):
-    return tuple(p%b for p,b in zip(pos, bounds))
+def parse(inp):
+    start = None
+    rocks = set()
 
+    lines = inp.splitlines()
+    for y, line in enumerate(lines):
+        for x, ch in enumerate(line):
+            if ch == 'S':
+                start = (x,y)
+            if ch == '#':
+                rocks.add((x,y))
+    bounds = len(lines[0]), len(lines)
 
-def find_positions(positions, rocks, bounds, steps):
+    visited = dict()
     queue = collections.deque()
-    for pos in positions:
-        queue.append((pos, steps))
-
-    new_positions = set()
-    visited = positions.copy()
-
+    queue.append((0, start))
     while queue:
-        pos, steps = queue.popleft()
-        if steps % 2 == 0:
-            new_positions.add(pos)
-        if steps == 0:
+        steps, pos = queue.popleft()
+        if pos in visited:
             continue
+        visited[pos] = steps
 
         for move in moves(pos):
-            if move in visited:
+            if move in visited or move in rocks:
                 continue
-            if wrap(move, bounds) in rocks:
+            if not all(0 <= p < b for p,b in zip(move, bounds)):
                 continue
-            visited.add(move)
-            queue.append((move, steps-1))
-
-    return new_positions
+            queue.append((steps+1, move))
+    return list(visited.values()), bounds[0]
 
 
 def part1(garden):
-    positions, rocks, bounds = garden
-    return len(find_positions(positions, rocks, bounds, 64))
+    visited, _ = garden
+    return sum(v%2==0 and v <= 64 for v in visited)
 
 
 def part2(garden):
-    positions, rocks, bounds = garden
-    size = bounds[0]
-    goal = 26501365
+    visited, size = garden
 
-    ys = []
-    for steps in [size//2, size, size]:
-        positions = find_positions(positions, rocks, bounds, steps)
-        ys.append(len(positions))
+    steps = 26501365
+    n = steps // size
+    h = size // 2
 
-    # use data points for quadratic interpolation
-    x = goal // size
-    a, b, c = ys
-    return a + (b-a)*x + ((c-b)-(b-a))*(x*(x-1)//2)
+    even = n*n * sum(v%2==0 for v in visited)
+    odd  = (n-1)*(n-1) * sum(v%2==1 for v in visited)
+    even_corners = n * sum(v%2==0 and v > h for v in visited)
+    odd_corners = (n+1) * sum(v%2==1 and v > h for v in visited)
+
+    return even + odd + even_corners - odd_corners
