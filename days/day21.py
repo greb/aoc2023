@@ -1,3 +1,5 @@
+import collections
+
 def parse(inp):
     positions = set()
     rocks = set()
@@ -24,56 +26,48 @@ def wrap(pos, bounds):
     return tuple(p%b for p,b in zip(pos, bounds))
 
 
-def step(positions, rocks, bounds):
-    new_positions = set()
+def find_positions(positions, rocks, bounds, steps):
+    queue = collections.deque()
     for pos in positions:
+        queue.append((pos, steps))
+
+    new_positions = set()
+    visited = positions.copy()
+
+    while queue:
+        pos, steps = queue.popleft()
+        if steps % 2 == 0:
+            new_positions.add(pos)
+        if steps == 0:
+            continue
+
         for move in moves(pos):
+            if move in visited:
+                continue
             if wrap(move, bounds) in rocks:
                 continue
-            new_positions.add(move)
+            visited.add(move)
+            queue.append((move, steps-1))
+
     return new_positions
-
-
-def display(positions, rocks, bounds):
-    for y in range(bounds[0]):
-        line = []
-        for x in range(bounds[1]):
-            if (x,y) in rocks:
-                line.append('#')
-            elif (x,y) in positions:
-                line.append('O')
-            else:
-                line.append('.')
-        print(''.join(line))
 
 
 def part1(garden):
     positions, rocks, bounds = garden
-    for _ in range(64):
-        positions = step(positions, rocks, bounds)
-    return len(positions)
+    return len(find_positions(positions, rocks, bounds, 64))
 
 
 def part2(garden):
     positions, rocks, bounds = garden
-    assert bounds[0] == bounds[1]
     size = bounds[0]
     goal = 26501365
 
-    steps = 0
     ys = []
-    while True:
-        positions = step(positions, rocks, bounds)
-        steps += 1
-        if steps % size == goal % size:
-            ys.append(len(positions))
-            if len(ys) == 3:
-                break
+    for steps in [size//2, size, size]:
+        positions = find_positions(positions, rocks, bounds, steps)
+        ys.append(len(positions))
 
     # use data points for quadratic interpolation
     x = goal // size
     a, b, c = ys
     return a + (b-a)*x + ((c-b)-(b-a))*(x*(x-1)//2)
-
-
-
